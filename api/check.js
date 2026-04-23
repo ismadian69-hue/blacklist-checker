@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
   const { ip } = req.query;
 
-  // 🔴 check input
   if (!ip) {
     return res.status(400).json({ error: "IP is required" });
   }
@@ -22,10 +21,6 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error("API ERROR:", error);
-
-    return res.status(500).json({
-      error: "Something went wrong",
-    });
+    return res.status(500).json({ error: "Server error" });
   }
 }
