@@ -1,9 +1,14 @@
 <script>
 async function checkIP(ip) {
-  const res = await fetch(`/api/check?ip=${ip}`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`/api/check?ip=${ip}`);
+    const data = await res.json();
 
-  return data.data.abuseConfidenceScore;
+    return data?.data?.abuseConfidenceScore ?? null;
+  } catch (e) {
+    console.log("error ip:", ip);
+    return null;
+  }
 }
 
 async function check() {
@@ -13,36 +18,39 @@ async function check() {
   let listed = 0;
   let clean = 0;
 
-  // IPs check
-  for (let ip of ips) {
-    ip = ip.trim();
-    if (!ip) continue;
+  // 🔄 loading
+  document.getElementById("results").innerHTML = "Checking...";
 
-    try {
-      const score = await checkIP(ip);
+  // 🔥 IPs (parallel)
+  const ipPromises = ips
+    .map(ip => ip.trim())
+    .filter(ip => ip)
+    .map(ip => checkIP(ip));
 
-      if (score > 50) listed++;
-      else clean++;
+  const ipResults = await Promise.all(ipPromises);
 
-    } catch (e) {
-      console.log("error ip:", ip);
-    }
-  }
+  ipResults.forEach(score => {
+    if (score === null) return;
 
-  // Domains (غير placeholder دابا)
+    if (score > 50) listed++;
+    else clean++;
+  });
+
+  // 🌐 Domains (placeholder دابا)
   let domainListed = 0;
 
   for (let d of domains) {
     d = d.trim();
     if (!d) continue;
 
-    // مؤقتاً نفس system
-    try {
-      const score = await checkIP(d);
-      if (score > 50) domainListed++;
-    } catch (e) {}
+    // ⚠️ AbuseIPDB ما كيدعمش domains
+    // دابا غير placeholder
+    if (d.includes(".")) {
+      domainListed++;
+    }
   }
 
+  // 🖥️ النتائج
   document.getElementById("results").innerHTML = `
     <p class="orange">CSS : ${listed} Listed</p>
     <p class="orange">XBL : ${listed} Listed</p>
