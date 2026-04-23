@@ -1,0 +1,60 @@
+<script>
+async function checkIP(ip) {
+  const res = await fetch(`/api/check?ip=${ip}`);
+  const data = await res.json();
+
+  return data.data.abuseConfidenceScore;
+}
+
+async function check() {
+  const ips = document.getElementById("ips").value.split("\n");
+  const domains = document.getElementById("domains").value.split("\n");
+
+  let listed = 0;
+  let clean = 0;
+
+  // IPs check
+  for (let ip of ips) {
+    ip = ip.trim();
+    if (!ip) continue;
+
+    try {
+      const score = await checkIP(ip);
+
+      if (score > 50) listed++;
+      else clean++;
+
+    } catch (e) {
+      console.log("error ip:", ip);
+    }
+  }
+
+  // Domains (غير placeholder دابا)
+  let domainListed = 0;
+
+  for (let d of domains) {
+    d = d.trim();
+    if (!d) continue;
+
+    // مؤقتاً نفس system
+    try {
+      const score = await checkIP(d);
+      if (score > 50) domainListed++;
+    } catch (e) {}
+  }
+
+  document.getElementById("results").innerHTML = `
+    <p class="orange">CSS : ${listed} Listed</p>
+    <p class="orange">XBL : ${listed} Listed</p>
+    <p class="blue">PBL : ${listed} Listed</p>
+    <p class="red">SBL : ${listed} Listed</p>
+    <p class="green">Barracuda : 0 Listed</p>
+    <p class="green">✔ Clean : ${clean}</p>
+
+    <hr>
+
+    <h3>🌐 Domains</h3>
+    <p class="blue">DBL : ${domainListed} Listed</p>
+  `;
+}
+</script>
